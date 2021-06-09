@@ -2,6 +2,7 @@ import errno
 import logging
 import os
 import subprocess
+import collections
 from tempfile import NamedTemporaryFile
 
 from bumpversion.exceptions import (
@@ -160,7 +161,7 @@ class Mercurial(BaseVCS):
                 "Mercurial working directory is not clean:\n{}".format(
                     b"\n".join(lines).decode()
                 )
-            )
+             )
 
     @classmethod
     def add_path(cls, path):
@@ -175,4 +176,68 @@ class Mercurial(BaseVCS):
             )
         if message:
             command += ["--message", message]
+        subprocess.check_output(command)
+
+
+RepoUrls = collections.namedtuple('RepoUrls', ['base', 'root', 'current'])
+
+class SVN(BaseVCS):
+
+    _COMMIT_COMMAND = ["svn", "commit", "--file"]
+
+    @classmethod
+    def current_url(cls):
+        output = subprocess.check_output(["svn", "info"]).decode().split('\n')
+        for line in output:
+            if line.startswith('URL:'):
+                return line.lstrip('URL: ')
+
+        else:
+            return None        
+
+    @classmethod
+    def repo_urls(cls):
+        curr_url = cls.current_url()
+        base = root = None
+        if curr_url is not None:
+            for folder in ["branch", "branches", "trunk"]:
+                try:
+                    idx = curr_url.rindex(folder)
+                except ValueError:
+                    continue
+                else:
+                    base = curr_url[:idx - 1]
+                    root = curr_url[:idx + len(folder)]
+                    break
+        return RepoUrls(base, root, curr_url)
+
+    @classmethod
+    def is_usable(cls):
+        return bool(cls.repo_urls().base)
+
+    @classmethod
+    def latest_tag_info(cls):
+        return {}
+
+    @classmethod
+    def assert_nondirty(cls):
+        uncommited = subprocess.check_output(["svn", "status", "-q"])
+        if uncommited:
+            raise WorkingDirectoryIsDirtyException(
+                "SVN working directory is not clean:\n{}".format(
+                    uncommited))
+
+    @classmethod
+    def add_path(cls, path):
+        _COMMIT_COMMAND = _COMMIT_COMMAND[:-1] + [path] + _COMMIT_COMMAND[-1]
+    
+    @classmethod
+    def tag(cls, sign, name, message):
+        """
+        Create a tag of the new_version in svn.
+        """
+        urls = cls.repo_urls()
+        command = ["svn", "copy", urls.root,
+                   urls.base + "/tags/" + name, "--message"]
+        command.append('"{}"'.format(message) if message else '""')
         subprocess.check_output(command)

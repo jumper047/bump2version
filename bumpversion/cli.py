@@ -33,7 +33,7 @@ from bumpversion.utils import (
     keyvaluestring,
     prefixed_environ,
 )
-from bumpversion.vcs import Git, Mercurial
+from bumpversion.vcs import Git, Mercurial, SVN
 
 
 DESCRIPTION = "{}: v{} (using Python v{})".format(
@@ -41,7 +41,7 @@ DESCRIPTION = "{}: v{} (using Python v{})".format(
     __version__,
     sys.version.split("\n")[0].split(" ")[0]
 )
-VCS = [Git, Mercurial]
+VCS = [Git, Mercurial, SVN]
 
 # detect either
 # bumpversion:part:value
