@@ -1,3 +1,4 @@
+import locale
 import errno
 import logging
 import os
@@ -187,7 +188,7 @@ class SVN(BaseVCS):
 
     @classmethod
     def current_url(cls):
-        output = subprocess.check_output(["svn", "info"]).decode().split('\n')
+        output = subprocess.check_output(["svn", "info"]).decode(locale.getpreferredencoding(False)).split('\n')
         for line in output:
             if line.startswith('URL:'):
                 return line.lstrip('URL: ')
