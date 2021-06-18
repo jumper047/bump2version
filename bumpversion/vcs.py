@@ -230,7 +230,7 @@ class SVN(BaseVCS):
 
     @classmethod
     def add_path(cls, path):
-        cls._COMMIT_COMMAND = cls._COMMIT_COMMAND[:-1] + [path] + cls._COMMIT_COMMAND[-1]
+        cls._COMMIT_COMMAND = cls._COMMIT_COMMAND[:-1] + [path] + cls._COMMIT_COMMAND[-1:]
     
     @classmethod
     def tag(cls, sign, name, message):
